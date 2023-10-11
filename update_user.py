@@ -103,6 +103,47 @@ def get_total_user_online_time():
 
     return jsonify({"totalTime": int(total_time_seconds)})
 
+@app.route('/api/stats/user/average', methods=['GET'])
+def get_user_average_time():
+    user_id = request.args.get('userId')
+
+    user_intervals = user_data_storage.get(user_id, [])
+
+    total_time_seconds = 0
+
+    for interval in user_intervals:
+        start_time, end_time = interval
+
+        if not isinstance(start_time, datetime):
+            start_time = datetime.strptime(start_time, date_format)
+        if end_time and not isinstance(end_time, datetime):
+            end_time = datetime.strptime(end_time, date_format)
+
+        end_time = end_time or datetime.now()
+
+        if end_time <= start_time:
+            total_time_seconds += (start_time - end_time).total_seconds()
+            print(total_time_seconds)
+
+    num_intervals = len(user_intervals)
+    print(num_intervals)
+
+    if num_intervals > 0:
+        total_days = (end_time - datetime.strptime(user_intervals[0][0], date_format)).days + 1
+        total_weeks = total_days // 7
+
+        daily_average = total_time_seconds / num_intervals
+        weekly_average = total_time_seconds / (total_weeks + 1)
+
+        return jsonify({
+            "weeklyAverage": int(weekly_average),
+            "dailyAverage": int(daily_average)
+        })
+    else:
+        return jsonify({
+            "weeklyAverage": 0,
+            "dailyAverage": 0
+        })
 
 
 
