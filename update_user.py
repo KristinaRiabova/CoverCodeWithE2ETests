@@ -23,8 +23,7 @@ def format_date_string(date_string):
             formatted_date_string += char
     return formatted_date_string
 
-
-
+blacklist = set()
 date_format = "%Y-%m-%dT%H:%M"
 user_data_storage = {}
 
@@ -44,6 +43,8 @@ def update_user_data():
 
                         current_time = datetime.now().strftime(date_format)
 
+                        if user_id in blacklist:
+                            continue
                         if user_id not in user_data_storage:
                             user_data_storage[user_id] = []
 
@@ -75,13 +76,14 @@ def update_user_data():
 
 @app.route('/user_intervals', methods=['GET'])
 def get_user_intervals():
-    return jsonify(user_data_storage)
+    return jsonify({user_id: intervals for user_id, intervals in user_data_storage.items() if user_id not in blacklist})
 
 
 @app.route('/api/stats/user/total', methods=['GET'])
 def get_total_user_online_time():
     user_id = request.args.get('userId')
-
+    if user_id in blacklist:
+        return jsonify({"error": "User ID is in the blacklist and has been forgotten."})
 
     user_intervals = user_data_storage.get(user_id, [])
 
@@ -106,6 +108,8 @@ def get_total_user_online_time():
 @app.route('/api/stats/user/average', methods=['GET'])
 def get_user_average_time():
     user_id = request.args.get('userId')
+    if user_id in blacklist:
+        return jsonify({"error": "User ID is in the blacklist and has been forgotten."})
 
     user_intervals = user_data_storage.get(user_id, [])
 
@@ -146,6 +150,17 @@ def get_user_average_time():
         })
 
 
+@app.route('/api/user/forget', methods=['POST'])
+def forget_user():
+    user_id = request.args.get('userId')
+
+    if user_id:
+        blacklist.add(user_id)
+        if user_id in user_data_storage:
+            del user_data_storage[user_id]
+        return jsonify({"userId": user_id})
+    else:
+        return jsonify({"error": "Missing 'userId' parameter in the request."})
 
 
 if __name__ == '__main__':
