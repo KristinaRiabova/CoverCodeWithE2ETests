@@ -77,7 +77,7 @@ def update_user_data():
             process_user_data(data)
 
 
-        if data.get('hasMore', False):
+        if len(data.get('data', [])) > 0:
             page_number += 1
         else:
             break

@@ -96,6 +96,19 @@ class IntegrationTestCase(unittest.TestCase):
         self.assertIsInstance(data, dict)
         self.assertIn('error', data)
 
+    def test_get_user_average1_time_endpoint(self):
+        user_id = '88885096-1825-640b-1dff-281b668b24e5'
+        response = self.app.get(f'/api/stats/user/average?userId={user_id}')
+        self.assertEqual(response.status_code, 200)
+
+        data = json.loads(response.data.decode('utf-8'))
+        if "error" not in data:
+            self.assertIsInstance(data, dict)
+            self.assertIn("weeklyAverage", data)
+            self.assertIn("dailyAverage", data)
+            self.assertGreater(data["weeklyAverage"], 0)
+            self.assertGreater(data["dailyAverage"], 0)
+
 
 if __name__ == '__main__':
     unittest.main()
